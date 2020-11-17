@@ -16,9 +16,10 @@ import { NgModuleRouteAnalyzer } from '@angular/compiler-cli/src/ngtsc/routing';
 import { CycleAnalyzer, ImportGraph } from '@angular/compiler-cli/src/ngtsc/cycles';
 import { AdapterResourceLoader } from '@angular/compiler-cli/src/ngtsc/resource';
 import { ReferenceGraph } from '@angular/compiler-cli/src/ngtsc/entry_point';
-import { DtsTransformRegistry, DecoratorHandler } from '@angular/compiler-cli/src/ngtsc/transform';
+import { DtsTransformRegistry, DecoratorHandler, CompilationMode } from '@angular/compiler-cli/src/ngtsc/transform';
 import { PerfRecorder, NOOP_PERF_RECORDER } from '@angular/compiler-cli/src/ngtsc/perf';
 import { ModuleWithProvidersScanner } from '@angular/compiler-cli/src/ngtsc/modulewithproviders';
+import { TemplateRegistry } from '@angular/compiler-cli/src/ngtsc/metadata/src/template_mapping';
 import { NgModuleSymbol } from './module.symbol';
 import { NgastTraitCompiler } from './trait-compiler';
 import { ComponentSymbol } from './component.symbol';
@@ -91,6 +92,7 @@ export class WorkspaceSymbols {
   private options: NgCompilerOptions;
   private rootNames: string[];
   private toolkit: Partial<Toolkit> = {};
+  private templateRegistry = new TemplateRegistry();
   private isCore = false;
   private analysed = false;
   private oldProgram: Program
@@ -117,6 +119,7 @@ export class WorkspaceSymbols {
         this.perfRecorder,
         this.incrementalDriver,
         this.options.compileNonExportedClasses !== false,
+        CompilationMode.FULL,
         this.dtsTransforms
       )
     );
@@ -159,7 +162,6 @@ export class WorkspaceSymbols {
     this.ensureAnalysis();
     return this.traitCompiler.allRecords('Component').map(({ node }) => new ComponentSymbol(this, node));
   }
-
 
   public getAllDirectives() {
     this.ensureAnalysis();
@@ -308,6 +310,7 @@ export class WorkspaceSymbols {
         this.metaReader,
         this.scopeReader,
         this.scopeRegistry,
+        this.templateRegistry,
         this.isCore,
         this.resourceManager,
         this.host.rootDirs,
